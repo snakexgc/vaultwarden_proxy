@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bitwarden-proxy",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-19",
+  "dev": {
+    "local_protocol": "https"
+  },
+  "vars": {
+    "BITWARDEN_REGION": "US",
+    "BITWARDEN_FORCE_PREMIUM": "true"
+  },
+  "assets": {
+    "directory": "./static/web-vault",
+    "binding": "ASSETS",
+    "run_worker_first": ["/index.html", "/css/vaultwarden.css"],
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "observability": {
+    "enabled": false
+  }
+}

@@ -1,0 +1,19 @@
+/* The two email inputs handle Enter differently. The client disables Other
+   when this account requires SSO, so select the matching input and actions. */
+.vw-email-sso,
+.vw-other-login {
+  display: none !important;
+}
+
+form:has(.vw-other-login[aria-disabled="true"]) .vw-email-sso {
+  display: block !important;
+}
+
+form:has(.vw-other-login[aria-disabled="true"]) :is(.vw-email-continue, .vw-continue-login, .vw-passkey-login, .vw-or-text) {
+  display: none !important;
+}
+
+/* The passkey action is conditionally rendered by the Web Vault. */
+.vw-or-text:not(:has(~ .vw-passkey-login)) {
+  display: none;
+}
