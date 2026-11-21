@@ -44,6 +44,32 @@ async function readRegistrationSetting(domain) {
   return null;
 }
 
+const proxyAuthStyles = `
+.vw-passkey-login,
+.vw-or-text,
+bit-unlock-via-prf,
+app-webauthn-login-settings,
+.vw-sso-login,
+button[id^="organization-options_button_link-sso-"],
+/* Settings provider IDs: Duo (2), Organization Duo (6), WebAuthn (7). */
+app-two-factor-setup :is(.providers-2fa-2, .providers-2fa-6, .providers-2fa-7) {
+  display: none !important;
+}
+
+/* The login picker exposes provider-specific SVGs but no provider IDs. */
+app-two-factor-options bit-item:has([id="two-factor-auth-duo-clip"], svg[viewBox="3.33 3.33 76.49 75.83"]) {
+  display: none !important;
+}
+
+/* A preselected challenge still offers other methods and recovery. */
+app-two-factor-auth app-two-factor-auth-webauthn,
+app-two-factor-auth form:has(app-two-factor-auth-duo, app-two-factor-auth-webauthn) :is(.vw-remember, button[buttonType="primary"]),
+app-two-factor-auth form:has(app-two-factor-auth-duo, app-two-factor-auth-webauthn) > div > p.tw-text-center,
+bit-landing-content:has(app-two-factor-auth-duo, app-two-factor-auth-webauthn) bit-landing-hero h1 + div {
+  display: none !important;
+}
+`;
+
 async function vaultStyles(url, method, env) {
   const domain = regions.get(env.BITWARDEN_REGION);
   if (!domain) return proxyError(500, "BITWARDEN_REGION must be US or EU.");
@@ -59,11 +85,8 @@ async function vaultStyles(url, method, env) {
     "Referrer-Policy": "no-referrer",
   };
   if (method === "HEAD") return new Response(null, { headers });
-  if (registrationDisabled === true) {
-    const css = await base.text();
-    return new Response(css + "\n.vw-signup-link { display: none !important; }\n", { headers });
-  }
-  return new Response(base.body, { headers });
+  const registrationStyles = registrationDisabled === true ? "\n.vw-signup-link { display: none !important; }\n" : "";
+  return new Response((await base.text()) + proxyAuthStyles + registrationStyles, { headers });
 }
 
 function makeUpstreamRequest(request, target, service, discovery) {

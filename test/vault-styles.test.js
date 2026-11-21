@@ -8,6 +8,22 @@ const baseCss = await readFile(new URL("../static/web-vault/css/vaultwarden.css"
 const assets = { fetch: () => new Response(baseCss, { headers: { "Content-Type": "text/css" } }) };
 const bindings = { ASSETS: assets, BITWARDEN_REGION: "US" };
 
+function assertProxyStyles(css) {
+  assert.ok(css.startsWith(baseCss));
+  const rules = css.slice(baseCss.length).split("}").filter((rule) => /display:\s*none\s*!important/.test(rule));
+  for (const selector of [
+    ".vw-passkey-login", ".vw-or-text", "bit-unlock-via-prf", "app-webauthn-login-settings",
+    ".vw-sso-login", "organization-options_button_link-sso-",
+    ".providers-2fa-2", ".providers-2fa-6", ".providers-2fa-7",
+    "app-two-factor-options bit-item:has(", "two-factor-auth-duo-clip",
+    'svg[viewBox="3.33 3.33 76.49 75.83"]',
+    "app-two-factor-auth app-two-factor-auth-webauthn",
+    "form:has(app-two-factor-auth-duo, app-two-factor-auth-webauthn)",
+  ]) {
+    assert.ok(rules.some((rule) => rule.includes(selector)), `Missing hide rule for ${selector}`);
+  }
+}
+
 test("CSS uses only the chosen region's anonymous public configuration", async (t) => {
   let publicRequest;
   let registrationDisabled = true;
@@ -31,7 +47,7 @@ test("CSS uses only the chosen region's anonymous public configuration", async (
     assert.equal(res.status, 200);
     assert.match(res.headers.get("content-type"), /^text\/css/);
     assert.match(res.headers.get("cache-control"), /max-age=300/);
-    assert.ok(css.includes(baseCss));
+    assertProxyStyles(css);
     assert.equal(/\.vw-signup-link\s*\{\s*display:\s*none/.test(css), registrationDisabled);
     registrationDisabled = false;
   }
@@ -49,7 +65,9 @@ test("an unavailable or unrecognized config keeps the bundled login form usable"
   ]) {
     const response = await worker.fetch(new Request(styleUrl), bindings);
     assert.equal(response.status, 200);
-    assert.equal(await response.text(), baseCss);
+    const css = await response.text();
+    assertProxyStyles(css);
+    assert.ok(!css.includes(".vw-signup-link"));
     assert.equal(response.headers.get("cache-control"), "no-store");
   }
 });
