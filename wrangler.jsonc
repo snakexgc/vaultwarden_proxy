@@ -17,7 +17,20 @@
     "html_handling": "none",
     "not_found_handling": "none"
   },
+  "logpush": false,
+  "tail_consumers": [],
   "observability": {
-    "enabled": false
+    "enabled": false,
+    "redact_query_string": true,
+    "issues": {
+      "enabled": false
+    },
+    "logs": {
+      "enabled": false,
+      "invocation_logs": false
+    },
+    "traces": {
+      "enabled": false
+    }
   }
 }
